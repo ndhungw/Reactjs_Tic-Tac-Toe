@@ -22,7 +22,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-// follow https://medium.com/@dev.umigo/deploying-a-react-app-on-heroku-d42c7847ce42
+# follow https://medium.com/@dev.umigo/deploying-a-react-app-on-heroku-d42c7847ce42
 src/*
 public/*
 build/static/css/*.map
