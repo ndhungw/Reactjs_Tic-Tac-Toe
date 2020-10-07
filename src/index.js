@@ -59,6 +59,8 @@ class Board extends React.Component {
 
     if (winner) {
       status = "Winner: " + winner;
+    } else if (this.state.squares.every((square) => square !== null)) {
+      status = "Draw!";
     } else {
       status = "Next player: " + (this.state.xIsNext ? "X" : "O");
     }
@@ -123,5 +125,6 @@ function calculateWinner(squares) {
       return squares[a];
     }
   }
+  
   return null;
 }
