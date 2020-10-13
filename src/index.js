@@ -12,10 +12,10 @@ import "./index.css";
 //   }
 // }
 
-function Square(props) {
+function Square({ value, onSquareClick }) {
   return (
-    <button className="square" onClick={props.onClick}>
-      {props.value}
+    <button className="square" onClick={onSquareClick}>
+      {value}
     </button>
   );
 }
@@ -48,7 +48,7 @@ class Board extends React.Component {
     return (
       <Square
         value={this.state.squares[i]}
-        onClick={() => this.handleClick(i)}
+        onSquareClick={() => this.handleClick(i)}
       />
     );
   }
