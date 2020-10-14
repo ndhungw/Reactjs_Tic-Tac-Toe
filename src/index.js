@@ -2,17 +2,29 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 
-function Square({ value, onSquareClick }) {
+const wonSquareStyle = {
+  background: '#FF0'
+}
+
+function Square({ value, onSquareClick, causedTheWin }) {
   return (
-    <button className="square" onClick={onSquareClick}>
+    <button 
+    className="square" 
+    onClick={onSquareClick}
+    style={causedTheWin ? wonSquareStyle : null}
+    >
       {value}
     </button>
   );
 }
 
-function Board({ squares, onClick }) {
+function Board({ squares, onClick, wonSquares }) {
   function renderSquare(i, j) {
-    return <Square value={squares[i][j]} onSquareClick={() => onClick(i, j)} />;
+    return <Square 
+    value={squares[i][j]} 
+    onSquareClick={() => onClick(i, j)} 
+    // causedTheWin={ wonSquares ? wonSquares[i][j] ? true : false : null}
+    />;
   }
 
   const board = squares.map((row, i) => (
@@ -26,17 +38,12 @@ function Board({ squares, onClick }) {
   return <div>{board}</div>;
 }
 
-// function HistoryButton({move, description, isClicked}) {
-//   return (
-//     <button
-//     onClick={() => this.jumpTo(move)}
-//     isClicked={isClicked}
-//     >{description}</button>
-//   );
-// }
-
 const maxRow = 3;
 const maxCol = 3;
+const moveBtnClickedStyle = {
+  background: "#ff0",
+  fontWeight: "bold",
+};
 class Game extends React.Component {
   constructor(props) {
     super(props);
@@ -52,6 +59,8 @@ class Game extends React.Component {
           },
         },
       ],
+      wonSquares: null,
+      orderedByAcs: true,
       stepNumber: 0,
       xIsNext: true,
     };
@@ -97,6 +106,12 @@ class Game extends React.Component {
     });
   }
 
+  changeOrder() {
+    this.setState({
+      orderedByAcs: !this.state.orderedByAcs,
+    });
+  }
+
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
@@ -105,6 +120,11 @@ class Game extends React.Component {
 
     if (winner) {
       status = "Winner: " + winner;
+
+      // this.setState({
+      //   wonSquares: history[this.state.history.length - 1].squares
+      // })
+
     } else if (this.state.stepNumber === maxRow * maxCol) {
       status = "Draw!";
     } else {
@@ -112,20 +132,17 @@ class Game extends React.Component {
     }
 
     const moves = history.map((step, move) => {
-      const description =
-        move !== 0
-          ? "Go to the move #" +
-            move +
-            " (row " +
-            step.moveDescription.row +
-            " col " +
-            step.moveDescription.col +
-            ")"
-          : "Go to the start";
+      const description = move !== 0 ? "Go to the move #" + move + " (row " + step.moveDescription.row + " col " + step.moveDescription.col + ")" : 
+      "Go to the start";
 
       return (
         <li key={move}>
-          <button onClick={() => this.jumpTo(move)}>{description}</button>
+          <button
+            onClick={() => this.jumpTo(move)}
+            style={this.state.stepNumber === move ? moveBtnClickedStyle : null}
+          >
+            {description}
+          </button>
         </li>
       );
     });
@@ -136,11 +153,16 @@ class Game extends React.Component {
           <Board
             squares={current.squares}
             onClick={(i, j) => this.handleClick(i, j)}
+            wonSquares={this.state.wonSquares}
           />
         </div>
         <div className="game-info">
           <div>{status}</div>
-          <ol>{moves}</ol>
+          <br />
+          <button onClick={() => this.changeOrder()}>
+            {this.state.orderedByAcs ? "Ascending" : "Descending"}
+          </button>
+          <ol>{this.state.orderedByAcs ? moves : moves.reverse()}</ol>
         </div>
       </div>
     );
