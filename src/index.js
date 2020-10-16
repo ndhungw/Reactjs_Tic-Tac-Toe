@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import "./index.css";
 
 const wonSquareStyle = {
-  background: '#FF0'
+  color: '#FF0'
 }
 
 function Square({ value, onSquareClick, causedTheWin }) {
@@ -18,19 +18,20 @@ function Square({ value, onSquareClick, causedTheWin }) {
   );
 }
 
-function Board({ squares, onClick, wonSquares }) {
+function Board({ squares, onClick, wonSquaresMarkedMatrix }) {
   function renderSquare(i, j) {
-    return <Square 
+    return (
+    <Square 
     value={squares[i][j]} 
     onSquareClick={() => onClick(i, j)} 
-    // causedTheWin={ wonSquares ? wonSquares[i][j] ? true : false : null}
-    />;
+    causedTheWin={ wonSquaresMarkedMatrix ? (wonSquaresMarkedMatrix[i][j] ? true : false) : null}
+    />);
   }
 
   const board = squares.map((row, i) => (
     <div className="board-row">
       {row.map((col, j) => {
-        return renderSquare(i, j);
+        return renderSquare(i, j, wonSquaresMarkedMatrix);
       })}
     </div>
   ));
@@ -59,7 +60,7 @@ class Game extends React.Component {
           },
         },
       ],
-      wonSquares: null,
+      wonSquaresMarkedMatrix: null,
       orderedByAcs: true,
       stepNumber: 0,
       xIsNext: true,
@@ -74,7 +75,7 @@ class Game extends React.Component {
       return row.slice();
     });
 
-    if (calWinner(squares) || squares[i][j]) {
+    if (calWinner(squares)|| squares[i][j]) {
       return;
     }
 
@@ -86,6 +87,7 @@ class Game extends React.Component {
     };
 
     this.setState({
+      wonSquaresMarkedMatrix: calWinner(squares),
       history: [
         ...history,
         {
@@ -99,7 +101,7 @@ class Game extends React.Component {
   }
 
   jumpTo(step) {
-    this.isClicked = true;
+    // this.isClicked = true;
     this.setState({
       stepNumber: step,
       xIsNext: step % 2 === 0,
@@ -115,16 +117,20 @@ class Game extends React.Component {
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
-    const winner = calWinner(current.squares);
+    const wonSquaresMarkedMatrix = calWinner(current.squares);
+    
+    // if (wonSquaresMarkedMatrix) {
+    //   this.setState({
+    //     wonSquaresMarkedMatrix: wonSquaresMarkedMatrix
+    //   })
+    // }
+    
+    const winner = wonSquaresMarkedMatrix ? (this.state.xIsNext ? 'O' : 'X') : null;
+
     let status;
 
     if (winner) {
       status = "Winner: " + winner;
-
-      // this.setState({
-      //   wonSquares: history[this.state.history.length - 1].squares
-      // })
-
     } else if (this.state.stepNumber === maxRow * maxCol) {
       status = "Draw!";
     } else {
@@ -153,7 +159,7 @@ class Game extends React.Component {
           <Board
             squares={current.squares}
             onClick={(i, j) => this.handleClick(i, j)}
-            wonSquares={this.state.wonSquares}
+            wonSquaresMarkedMatrix={this.state.wonSquaresMarkedMatrix}
           />
         </div>
         <div className="game-info">
@@ -175,12 +181,20 @@ ReactDOM.render(<Game />, document.getElementById("root"));
 
 function checkDiagonal(squares) {
   let result = "";
+  const wonMarker = Array(3).fill().map(() => Array(3).fill(null)); // matrix that only caused-won squares are not null
+
   for (let idx = 0; idx < squares.length; idx++) {
     if (squares[idx][idx]) {
       result += squares[idx][idx];
+      wonMarker[idx][idx] = squares[idx][idx];
     }
   }
-  return result === "XXX" ? "X" : result === "OOO" ? "O" : null;
+
+  if (result === "XXX" || result === "OOO") {
+    return wonMarker;
+  }
+
+  return null;
 }
 
 function checkAntiDiagonal(squares) {
@@ -232,6 +246,8 @@ function checkCols(squares) {
   return null;
 }
 
+
+// return: a matrix that only contain caused-won squares
 function calWinner(squares) {
   return (
     checkDiagonal(squares) ||
