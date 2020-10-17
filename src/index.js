@@ -34,12 +34,12 @@ class Game extends React.Component {
             .fill()
             .map(() => Array(boardSize).fill(null)),
           moveDescription: {
-            row: null,
-            col: null,
+            rowIdx: null,
+            colIdx: null,
           },
         },
       ],
-      wonSquaresMarkedMatrix: null,
+      wonSquares: null,
       orderedByAcs: true,
       stepNumber: 0,
       xIsNext: true,
@@ -54,19 +54,21 @@ class Game extends React.Component {
       return row.slice();
     });
 
-    if (calWinner(squares) || squares[i][j]) {
+    const wonSquares = calWinner(squares, current.moveDescription);
+
+    if (wonSquares || squares[i][j]) {
       return;
     }
 
     squares[i][j] = this.state.xIsNext ? "X" : "O";
 
     const moveDescription = {
-      row: i,
-      col: j,
+      rowIdx: i,
+      colIdx: j,
     };
 
     this.setState({
-      wonSquaresMarkedMatrix: calWinner(squares),
+      wonSquares: calWinner(squares, moveDescription),
       history: [
         ...history,
         {
@@ -82,12 +84,12 @@ class Game extends React.Component {
   jumpTo(step) {
     const history = this.state.history;
     const current = history[step];
-    const wonSquaresMarkedMatrix = calWinner(current.squares);
+    const wonSquares = calWinner(current.squares, current.moveDescription);
 
     this.setState({
       stepNumber: step,
       xIsNext: step % 2 === 0,
-      wonSquaresMarkedMatrix: wonSquaresMarkedMatrix,
+      wonSquares: wonSquares,
     });
   }
 
@@ -100,9 +102,9 @@ class Game extends React.Component {
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
-    const wonSquaresMarkedMatrix = calWinner(current.squares);
+    const wonSquares = calWinner(current.squares, current.moveDescription);
 
-    const winner = wonSquaresMarkedMatrix
+    const winner = wonSquares
       ? this.state.xIsNext
         ? "O"
         : "X"
@@ -121,7 +123,7 @@ class Game extends React.Component {
     const moves = history.map((step, move) => {
       const description =
         move !== 0
-          ? `Go to the move #${move} (${step.moveDescription.row}, ${step.moveDescription.col})`
+          ? `Go to the move #${move} (${step.moveDescription.rowIdx}, ${step.moveDescription.colIdx})`
           : "Go to the start";
 
       return (
@@ -142,7 +144,7 @@ class Game extends React.Component {
           <Board
             squares={current.squares}
             onClick={(i, j) => this.handleClick(i, j)}
-            wonSquaresMarkedMatrix={this.state.wonSquaresMarkedMatrix}
+            wonSquares={this.state.wonSquares}
           />
         </div>
         <div className="game-info">
