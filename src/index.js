@@ -1,59 +1,38 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
+import Board from "./components/Board/index";
+import { calWinner } from "./components/Game/gameServices";
 
-const wonSquareStyle = {
-  color: '#FF0'
-}
-
-function Square({ value, onSquareClick, causedTheWin }) {
-  return (
-    <button 
-    className="square" 
-    onClick={onSquareClick}
-    style={causedTheWin ? wonSquareStyle : null}
-    >
-      {value}
-    </button>
-  );
-}
-
-function Board({ squares, onClick, wonSquaresMarkedMatrix }) {
-  function renderSquare(i, j) {
-    return (
-    <Square 
-    value={squares[i][j]} 
-    onSquareClick={() => onClick(i, j)} 
-    causedTheWin={ wonSquaresMarkedMatrix ? (wonSquaresMarkedMatrix[i][j] ? true : false) : null}
-    />);
-  }
-
-  const board = squares.map((row, i) => (
-    <div className="board-row">
-      {row.map((col, j) => {
-        return renderSquare(i, j, wonSquaresMarkedMatrix);
-      })}
-    </div>
-  ));
-
-  return <div>{board}</div>;
-}
-
-const maxRow = 3;
-const maxCol = 3;
+const boardSize = 3;
 const moveBtnClickedStyle = {
   background: "#ff0",
   fontWeight: "bold",
 };
+
 class Game extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      // winCheck: {
+      //   xPlayer: {
+      //     xDiagonalCount: 0,
+      //     xAntiDiagonalCount: 0,
+      //     xRowsCount: Array(boardSize).fill(0),
+      //     xColsCount: Array(boardSize).fill(0),
+      //   },
+      //   oPlayer: {
+      //     oDiagonalCount: 0,
+      //     oAntiDiagonalCount: 0,
+      //     oRowsCount: Array(boardSize).fill(0),
+      //     oColsCount: Array(boardSize).fill(0),
+      //   },
+      // },
       history: [
         {
-          squares: Array(maxRow)
+          squares: Array(boardSize)
             .fill()
-            .map(() => Array(maxCol).fill(null)),
+            .map(() => Array(boardSize).fill(null)),
           moveDescription: {
             row: null,
             col: null,
@@ -75,7 +54,7 @@ class Game extends React.Component {
       return row.slice();
     });
 
-    if (calWinner(squares)|| squares[i][j]) {
+    if (calWinner(squares) || squares[i][j]) {
       return;
     }
 
@@ -101,10 +80,14 @@ class Game extends React.Component {
   }
 
   jumpTo(step) {
-    // this.isClicked = true;
+    const history = this.state.history;
+    const current = history[step];
+    const wonSquaresMarkedMatrix = calWinner(current.squares);
+
     this.setState({
       stepNumber: step,
       xIsNext: step % 2 === 0,
+      wonSquaresMarkedMatrix: wonSquaresMarkedMatrix,
     });
   }
 
@@ -118,28 +101,28 @@ class Game extends React.Component {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
     const wonSquaresMarkedMatrix = calWinner(current.squares);
-    
-    // if (wonSquaresMarkedMatrix) {
-    //   this.setState({
-    //     wonSquaresMarkedMatrix: wonSquaresMarkedMatrix
-    //   })
-    // }
-    
-    const winner = wonSquaresMarkedMatrix ? (this.state.xIsNext ? 'O' : 'X') : null;
+
+    const winner = wonSquaresMarkedMatrix
+      ? this.state.xIsNext
+        ? "O"
+        : "X"
+      : null;
 
     let status;
 
     if (winner) {
       status = "Winner: " + winner;
-    } else if (this.state.stepNumber === maxRow * maxCol) {
+    } else if (this.state.stepNumber === boardSize * boardSize) {
       status = "Draw!";
     } else {
       status = "Next player: " + (this.state.xIsNext ? "X" : "O");
     }
 
     const moves = history.map((step, move) => {
-      const description = move !== 0 ? "Go to the move #" + move + " (row " + step.moveDescription.row + " col " + step.moveDescription.col + ")" : 
-      "Go to the start";
+      const description =
+        move !== 0
+          ? `Go to the move #${move} (${step.moveDescription.row}, ${step.moveDescription.col})`
+          : "Go to the start";
 
       return (
         <li key={move}>
@@ -178,81 +161,3 @@ class Game extends React.Component {
 // ========================================
 
 ReactDOM.render(<Game />, document.getElementById("root"));
-
-function checkDiagonal(squares) {
-  let result = "";
-  const wonMarker = Array(3).fill().map(() => Array(3).fill(null)); // matrix that only caused-won squares are not null
-
-  for (let idx = 0; idx < squares.length; idx++) {
-    if (squares[idx][idx]) {
-      result += squares[idx][idx];
-      wonMarker[idx][idx] = squares[idx][idx];
-    }
-  }
-
-  if (result === "XXX" || result === "OOO") {
-    return wonMarker;
-  }
-
-  return null;
-}
-
-function checkAntiDiagonal(squares) {
-  let result = "";
-
-  for (let colIdx = 0; colIdx < squares.length; colIdx++) {
-    let rowIdx = squares.length - 1 - colIdx;
-
-    if (squares[rowIdx][colIdx]) {
-      result += squares[rowIdx][colIdx];
-    }
-  }
-  return result === "XXX" ? "X" : result === "OOO" ? "O" : null;
-}
-
-function checkRows(squares) {
-  for (let rowIdx = 0; rowIdx < squares.length; rowIdx++) {
-    let result = "";
-    for (let colIdx = 0; colIdx < squares[0].length; colIdx++) {
-      if (squares[rowIdx][colIdx]) {
-        result += squares[rowIdx][colIdx];
-      }
-    }
-
-    if (result === "XXX") {
-      return "X";
-    } else if (result === "OOO") {
-      return "O";
-    }
-  }
-  return null;
-}
-
-function checkCols(squares) {
-  for (let colIdx = 0; colIdx < squares[0].length; colIdx++) {
-    let result = "";
-    for (let rowIdx = 0; rowIdx < squares.length; rowIdx++) {
-      if (squares[rowIdx][colIdx]) {
-        result += squares[rowIdx][colIdx];
-      }
-    }
-
-    if (result === "XXX") {
-      return "X";
-    } else if (result === "OOO") {
-      return "O";
-    }
-  }
-  return null;
-}
-
-
-// return: a matrix that only contain caused-won squares
-function calWinner(squares) {
-  return (
-    checkDiagonal(squares) ||
-    checkAntiDiagonal(squares) ||
-    checkRows(squares) ||
-    checkCols(squares)
-  );
-}
